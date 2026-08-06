@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%232a78d6%22/><rect x=%2218%22 y=%2250%22 width=%2216%22 height=%2232%22 rx=%224%22 fill=%22white%22/><rect x=%2242%22 y=%2234%22 width=%2216%22 height=%2248%22 rx=%224%22 fill=%22white%22 opacity=%22.85%22/><rect x=%2266%22 y=%2218%22 width=%2216%22 height=%2264%22 rx=%224%22 fill=%22%23eb6834%22/></svg>">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mitigation Delivery Explorer</title>
+<meta name="description" content="Interactive explorer and schedule reality-check tool for U.S. federally funded hazard mitigation construction, built on OpenFEMA delivery records.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="tip"></div>
+<nav><div class="wrap">
+  <div class="brand"><span class="dot"></span>Mitigation Delivery Explorer</div>
+  <div class="links">
+    <a href="#money">Funding</a><a href="#schedule">Schedules</a><a href="#states">States</a><a href="#planner">Reality check</a><a href="#data">Data</a>
+  </div>
+  <button id="themeBtn">Dark</button>
+</div></nav>
+
+<header class="wrap">
+  <div class="kicker">U.S. federally funded hazard mitigation construction, 1999-2024</div>
+  <h1>These projects rarely blow their budgets. They quietly deliver less, and late.</h1>
+  <p class="lede">An interactive companion to a portfolio analysis of <b>14,906 construction projects</b> funded through FEMA Hazard Mitigation Assistance grants: buyouts of flood-prone homes, elevations, safe rooms, drainage and more. Built entirely from public OpenFEMA transaction records and the NOAA storm archive.</p>
+  <div id="loadError"></div>
+  <div class="tiles" id="tiles"></div>
+</header>
+
+<section id="money" class="wrap">
+  <div class="sec-kicker">The funding outcome</div>
+  <h2>Under-delivery, not cost overrun</h2>
+  <p class="sub">Grant-funded construction cannot overrun the way contract work does: the award is a ceiling. What the obligation ledger shows instead is money handed back. More than twice as many projects finish materially below their funded amount as above it.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Where projects end up against their award</h3>
+      <div class="cap">Final obligation ÷ initial award, share of projects</div>
+      <div id="histChart"></div>
+      <div class="legend"><span><span class="sw" style="background:var(--s2)"></span>Descoped &gt;5% · 43.2%</span><span><span class="sw" style="background:var(--hold)"></span>Held ±5% · 38.8%</span><span><span class="sw" style="background:var(--s1)"></span>Grew &gt;5% · 18.0%</span></div>
+    </div>
+    <div class="card">
+      <h3>Who gets money taken back</h3>
+      <div class="cap">Share of projects with at least one deobligation, by activity type</div>
+      <div id="famChart"></div>
+      <div class="note">The activities that depend on homeowners still saying yes years later, buyouts above all, shrink most. Equipment purchases hold their funding.</div>
+    </div>
+  </div>
+</section>
+
+<section id="schedule" class="wrap">
+  <div class="sec-kicker">The schedule outcome</div>
+  <h2>Late against their own promise</h2>
+  <p class="sub">Where applicants had to propose a schedule to win a competitive award, 92% blew past it, at a median of 2.59× the proposed duration. The benchmark is not an analyst's baseline. It is the number the applicant wrote to win the money.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Schedule growth by grant program</h3>
+      <div class="cap">Realized ÷ proposed duration: median dot, P25–P75 band, P90 tick</div>
+      <div id="progChart"></div>
+      <div class="note">Programs whose applicants promise the shortest schedules grow the most.</div>
+    </div>
+    <div class="card">
+      <h3>Median delivery time by approval year</h3>
+      <div class="cap">Years from approval to closeout, closed projects, 1999–2021</div>
+      <div id="trendChart"></div>
+      <div class="note">A slow drift downward of roughly 0.44 years per decade. Recent cohorts exclude still-open projects.</div>
+    </div>
+  </div>
+</section>
+
+<section id="states" class="wrap">
+  <div class="sec-kicker">The administrative tier</div>
+  <h2>Where a project lives decides how fast it moves</h2>
+  <p class="sub">About 30% of the variance in delivery time sits between administering state offices, not between projects. The same kind of project averages 2.3 years in the fastest states and over 8 in the slowest. Click a state.</p>
+  <div class="mapwrap">
+    <div class="card">
+      <h3>Mean years to closeout, by administering state</h3>
+      <div class="cap">Empirical-Bayes shrunk estimates; states with ≥25 projects</div>
+      <div id="usmap"></div>
+      <div class="terr-chips" id="terrChips"></div>
+      <div class="mapscale"><span id="scaleMin"></span><span class="ramp"></span><span id="scaleMax"></span><span style="margin-left:auto" id="rampNote">darker = slower</span></div>
+    </div>
+    <div class="card" id="statePanel"></div>
+  </div>
+</section>
+
+<section id="planner" class="wrap">
+  <div class="sec-kicker">The implication, as a tool</div>
+  <h2>Schedule reality check</h2>
+  <p class="sub">Proposed schedules in competitive applications are commitment devices, not forecasts. This tool applies the observed growth distribution for your activity type to your proposed duration, the reference-class forecast the portfolio itself implies. Planning numbers, not a guarantee.</p>
+  <div class="planner">
+    <div class="card">
+      <div class="field"><label>Mitigation activity type</label><select id="pFam"></select></div>
+      <div class="field"><label>Proposed duration: <span class="mono" id="pMonthsLabel">24</span> months</label>
+        <input type="range" id="pMonths" min="6" max="72" step="1" value="24"></div>
+      <div class="field"><label>Award amount context</label>
+        <div class="note" id="scopeNote" style="margin-top:2px"></div></div>
+    </div>
+    <div class="card">
+      <h3>What history says about a proposal like yours</h3>
+      <div style="display:flex;gap:34px;align-items:baseline;margin:10px 0 6px">
+        <div><div class="big-answer" id="answerMedian"></div><div class="cap" style="margin-top:6px">median realistic duration</div></div>
+        <div><div class="big-answer" style="font-size:26px" id="answerRange"></div><div class="cap" style="margin-top:6px">middle 50% of comparable projects</div></div>
+        <div id="answerExceed" style="margin-left:auto"></div>
+      </div>
+      <div id="plannerChart"></div>
+      <div class="note" id="plannerNote"></div>
+    </div>
+  </div>
+</section>
+
+<section id="data" class="wrap">
+  <div class="sec-kicker">Method and data</div>
+  <h2>What this is built on</h2>
+  <div class="grid2">
+    <div class="card"><h3>Sources</h3>
+      <div class="stat-row"><span class="k">OpenFEMA HMA project register</span><span class="v">56,114 projects</span></div>
+      <div class="stat-row"><span class="k">Financial transaction ledger</span><span class="v">139,378 transactions</span></div>
+      <div class="stat-row"><span class="k">Subapplications (proposed schedules)</span><span class="v">62,791 records</span></div>
+      <div class="stat-row"><span class="k">NOAA Storm Events archive</span><span class="v">1.3M county events</span></div>
+      <div class="note">Retrieved July 2026. All statistics on this page are precomputed aggregates of the public files, stored as JSON in the data folder; no individual project data is served.</div>
+    </div>
+    <div class="card"><h3>Reading notes</h3>
+      <div class="note" style="margin-top:4px;font-size:12.5px;line-height:1.7">
+      Delivery time runs from initial federal approval to closeout and is estimated with censoring retained, so still-open projects are counted rather than ignored. Award size is the first award transaction in the reconstructed ledger. Deobligation is a formal federal action removing obligated funds; it is measured here as recorded and cannot by itself separate thrift from abandoned scope. Schedule growth covers the six competitively awarded programs, the only ones that record a proposed period of performance.</div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap">
+  <div>Built from public data: FEMA OpenFEMA Hazard Mitigation Assistance datasets (retrieved July 2026) and the NOAA NCEI Storm Events Database. This page accompanies a peer-reviewed manuscript on delivery performance in grant-funded public construction; statistics shown are portfolio-level aggregates.</div>
+  <div>Delivery estimates are descriptive, not causal, and not official guidance of FEMA or NOAA.</div>
+</div></footer>
+
+<script src="js/vendor/d3.v7.min.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/map.js"></script>
+<script src="js/planner.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
